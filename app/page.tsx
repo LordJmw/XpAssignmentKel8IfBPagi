@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { DragDropContext, type DropResult } from "react-beautiful-dnd"
 import { TaskForm } from "@/components/task-form"
 import { TaskBoard } from "@/components/task-board"
 import type { Task } from "@/types/task"
@@ -67,32 +66,6 @@ export default function TaskManagement() {
     return [...tasksToSort].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
   }
 
-  // Handle drag and drop
-  const handleDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result
-
-    // If there's no destination or the item was dropped back in the same place
-    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
-      return
-    }
-
-    // Find the task that was dragged
-    const task = tasks.find((t) => t.id === draggableId)
-    if (!task) return
-
-    // Create a new array without the dragged task
-    const newTasks = tasks.filter((t) => t.id !== draggableId)
-
-    // Update the task status based on the destination column
-    const updatedTask = { ...task, status: destination.droppableId as "todo" | "in-progress" | "completed" }
-
-    // Insert the task at the new position
-    newTasks.splice(destination.index, 0, updatedTask)
-
-    // Update the state
-    setTasks(newTasks)
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
@@ -117,9 +90,7 @@ export default function TaskManagement() {
         </div>
       )}
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <TaskBoard tasks={tasks} onEdit={editTask} onDelete={deleteTask} onStatusChange={changeTaskStatus} />
-      </DragDropContext>
+      <TaskBoard tasks={tasks} onEdit={editTask} onDelete={deleteTask} onStatusChange={changeTaskStatus} />
     </div>
   )
 }

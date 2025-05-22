@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TaskItem } from "@/components/task-item"
 import type { Task } from "@/types/task"
-import type { DroppableProvided } from "react-beautiful-dnd"
 
 interface TaskColumnProps {
   title: string
@@ -9,11 +8,10 @@ interface TaskColumnProps {
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
   onStatusChange: (taskId: string, newStatus: "todo" | "in-progress" | "completed") => void
-  provided: DroppableProvided
   className?: string
 }
 
-export function TaskColumn({ title, tasks, onEdit, onDelete, onStatusChange, provided, className }: TaskColumnProps) {
+export function TaskColumn({ title, tasks, onEdit, onDelete, onStatusChange, className }: TaskColumnProps) {
   return (
     <Card className={`h-full ${className}`}>
       <CardHeader className="pb-2">
@@ -23,22 +21,14 @@ export function TaskColumn({ title, tasks, onEdit, onDelete, onStatusChange, pro
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 min-h-[50vh]" ref={provided.innerRef} {...provided.droppableProps}>
+        <div className="space-y-3 min-h-[50vh]">
           {tasks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground italic text-sm">No tasks</div>
           ) : (
-            tasks.map((task, index) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                index={index}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onStatusChange={onStatusChange}
-              />
+            tasks.map((task) => (
+              <TaskItem key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange} />
             ))
           )}
-          {provided.placeholder}
         </div>
       </CardContent>
     </Card>

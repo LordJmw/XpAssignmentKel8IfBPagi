@@ -1,4 +1,3 @@
-import { Droppable } from "react-beautiful-dnd"
 import { TaskColumn } from "@/components/task-column"
 import type { Task } from "@/types/task"
 
@@ -17,47 +16,32 @@ export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange }: TaskBoard
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Droppable droppableId="todo">
-        {(provided) => (
-          <TaskColumn
-            title="To Do"
-            tasks={todoTasks}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onStatusChange={onStatusChange}
-            provided={provided}
-            className="bg-slate-50 border-t-4 border-slate-400"
-          />
-        )}
-      </Droppable>
+      <TaskColumn
+        title="To Do"
+        tasks={todoTasks}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onStatusChange={onStatusChange}
+        className="bg-slate-50 border-t-4 border-slate-400"
+      />
 
-      <Droppable droppableId="in-progress">
-        {(provided) => (
-          <TaskColumn
-            title="In Progress"
-            tasks={inProgressTasks}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onStatusChange={onStatusChange}
-            provided={provided}
-            className="bg-blue-50 border-t-4 border-blue-400"
-          />
-        )}
-      </Droppable>
+      <TaskColumn
+        title="In Progress"
+        tasks={inProgressTasks}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onStatusChange={onStatusChange}
+        className="bg-blue-50 border-t-4 border-blue-400"
+      />
 
-      <Droppable droppableId="completed">
-        {(provided) => (
-          <TaskColumn
-            title="Completed"
-            tasks={completedTasks}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onStatusChange={onStatusChange}
-            provided={provided}
-            className="bg-green-50 border-t-4 border-green-400"
-          />
-        )}
-      </Droppable>
+      <TaskColumn
+        title="Completed"
+        tasks={completedTasks}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onStatusChange={onStatusChange}
+        className="bg-green-50 border-t-4 border-green-400"
+      />
     </div>
   )
 }

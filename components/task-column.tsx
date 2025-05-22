@@ -8,11 +8,12 @@ interface TaskColumnProps {
   tasks: Task[]
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
+  onStatusChange: (taskId: string, newStatus: "todo" | "in-progress" | "completed") => void
   provided: DroppableProvided
   className?: string
 }
 
-export function TaskColumn({ title, tasks, onEdit, onDelete, provided, className }: TaskColumnProps) {
+export function TaskColumn({ title, tasks, onEdit, onDelete, onStatusChange, provided, className }: TaskColumnProps) {
   return (
     <Card className={`h-full ${className}`}>
       <CardHeader className="pb-2">
@@ -27,7 +28,14 @@ export function TaskColumn({ title, tasks, onEdit, onDelete, provided, className
             <div className="text-center py-8 text-muted-foreground italic text-sm">No tasks</div>
           ) : (
             tasks.map((task, index) => (
-              <TaskItem key={task.id} task={task} index={index} onEdit={onEdit} onDelete={onDelete} />
+              <TaskItem
+                key={task.id}
+                task={task}
+                index={index}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onStatusChange={onStatusChange}
+              />
             ))
           )}
           {provided.placeholder}

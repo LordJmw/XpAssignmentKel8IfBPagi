@@ -5,7 +5,7 @@ import { Draggable } from "react-beautiful-dnd"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, GripVertical } from "lucide-react"
+import { Edit, Trash2, GripVertical, ArrowRight, CheckCircle2, Clock, RotateCcw } from "lucide-react"
 import type { Task } from "@/types/task"
 
 interface TaskItemProps {
@@ -13,12 +13,13 @@ interface TaskItemProps {
   index: number
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
+  onStatusChange: (taskId: string, newStatus: "todo" | "in-progress" | "completed") => void
 }
 
-export function TaskItem({ task, index, onEdit, onDelete }: TaskItemProps) {
+export function TaskItem({ task, index, onEdit, onDelete, onStatusChange }: TaskItemProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  // Define styles based on priority and status
+  // Define styles based on priority
   const getPriorityBadge = () => {
     switch (task.priority) {
       case "high":
@@ -27,6 +28,61 @@ export function TaskItem({ task, index, onEdit, onDelete }: TaskItemProps) {
         return <Badge className="bg-yellow-500 hover:bg-yellow-600">Medium</Badge>
       case "low":
         return <Badge className="bg-green-500 hover:bg-green-600">Low</Badge>
+      default:
+        return null
+    }
+  }
+
+  // Render status change buttons based on current status
+  const renderStatusButtons = () => {
+    switch (task.status) {
+      case "todo":
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+            onClick={() => onStatusChange(task.id, "in-progress")}
+          >
+            <Clock className="h-3.5 w-3.5 mr-1" />
+            Start
+          </Button>
+        )
+      case "in-progress":
+        return (
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+              onClick={() => onStatusChange(task.id, "todo")}
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />
+              Back
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300"
+              onClick={() => onStatusChange(task.id, "completed")}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+              Complete
+            </Button>
+          </div>
+        )
+      case "completed":
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+            onClick={() => onStatusChange(task.id, "in-progress")}
+          >
+            <ArrowRight className="h-3.5 w-3.5 mr-1" />
+            Reopen
+          </Button>
+        )
       default:
         return null
     }
@@ -67,24 +123,24 @@ export function TaskItem({ task, index, onEdit, onDelete }: TaskItemProps) {
                   <p className="text-muted-foreground text-sm mt-1 mb-3 line-clamp-2">{task.description}</p>
                 )}
 
-                <div
-                  className={`flex justify-end gap-1 transition-opacity duration-200 ${
-                    isHovered || snapshot.isDragging ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  <Button variant="ghost" size="sm" onClick={() => onEdit(task)} className="h-7 px-2">
-                    <Edit className="h-3.5 w-3.5 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(task.id)}
-                    className="h-7 px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-1" />
-                    Delete
-                  </Button>
+                <div className="flex flex-wrap justify-between items-center gap-2 mt-3">
+                  {renderStatusButtons()}
+
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(task)} className="h-7 px-2">
+                      <Edit className="h-3.5 w-3.5 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(task.id)}
+                      className="h-7 px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -56,6 +56,11 @@ export default function TaskManagement() {
     setShowForm(true)
   }
 
+  // Change task status
+  const changeTaskStatus = (taskId: string, newStatus: "todo" | "in-progress" | "completed") => {
+    setTasks((prevTasks) => prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)))
+  }
+
   // Sort tasks by priority (high > medium > low)
   const sortTasksByPriority = (tasksToSort: Task[]) => {
     const priorityOrder = { high: 1, medium: 2, low: 3 }
@@ -113,7 +118,7 @@ export default function TaskManagement() {
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <TaskBoard tasks={tasks} onEdit={editTask} onDelete={deleteTask} />
+        <TaskBoard tasks={tasks} onEdit={editTask} onDelete={deleteTask} onStatusChange={changeTaskStatus} />
       </DragDropContext>
     </div>
   )

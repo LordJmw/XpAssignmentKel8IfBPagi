@@ -6,9 +6,10 @@ interface TaskBoardProps {
   tasks: Task[]
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
+  onStatusChange: (taskId: string, newStatus: "todo" | "in-progress" | "completed") => void
 }
 
-export function TaskBoard({ tasks, onEdit, onDelete }: TaskBoardProps) {
+export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange }: TaskBoardProps) {
   // Group tasks by status
   const todoTasks = tasks.filter((task) => task.status === "todo")
   const inProgressTasks = tasks.filter((task) => task.status === "in-progress")
@@ -23,6 +24,7 @@ export function TaskBoard({ tasks, onEdit, onDelete }: TaskBoardProps) {
             tasks={todoTasks}
             onEdit={onEdit}
             onDelete={onDelete}
+            onStatusChange={onStatusChange}
             provided={provided}
             className="bg-slate-50 border-t-4 border-slate-400"
           />
@@ -36,6 +38,7 @@ export function TaskBoard({ tasks, onEdit, onDelete }: TaskBoardProps) {
             tasks={inProgressTasks}
             onEdit={onEdit}
             onDelete={onDelete}
+            onStatusChange={onStatusChange}
             provided={provided}
             className="bg-blue-50 border-t-4 border-blue-400"
           />
@@ -49,6 +52,7 @@ export function TaskBoard({ tasks, onEdit, onDelete }: TaskBoardProps) {
             tasks={completedTasks}
             onEdit={onEdit}
             onDelete={onDelete}
+            onStatusChange={onStatusChange}
             provided={provided}
             className="bg-green-50 border-t-4 border-green-400"
           />

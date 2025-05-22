@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Task } from "@/types/task"
+import { AlertCircle } from "lucide-react"
 
 interface TaskFormProps {
   onSubmit: (task: Task) => void
@@ -27,6 +27,7 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
     priority: "medium",
     status: "todo",
   })
+  const [error, setError] = useState("")
 
   // Update form when initialTask changes (for editing)
   useEffect(() => {
@@ -42,11 +43,13 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
         status: "todo",
       })
     }
+    setError("")
   }, [initialTask])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setTask((prev) => ({ ...prev, [name]: value }))
+    if (name === "title" && error) setError("")
   }
 
   const handleSelectChange = (name: string, value: string) => {
@@ -55,6 +58,12 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!task.title.trim()) {
+      setError("Title is required")
+      return
+    }
+
     onSubmit(task)
 
     // Only reset if not editing
@@ -70,21 +79,29 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-t-4 border-primary">
+      <CardHeader className="pb-3">
         <CardTitle>{isEditing ? "Edit Task" : "Create New Task"}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title" className="flex items-center gap-1">
+              Title
+              {error && (
+                <span className="text-red-500 text-xs flex items-center ml-1">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {error}
+                </span>
+              )}
+            </Label>
             <Input
               id="title"
               name="title"
               value={task.title}
               onChange={handleChange}
               placeholder="Task title"
-              required
+              className={error ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
           </div>
 
@@ -143,12 +160,10 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-between">
-          {isEditing && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
+        <CardFooter className="flex justify-between pt-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
           <Button type="submit">{isEditing ? "Update Task" : "Add Task"}</Button>
         </CardFooter>
       </form>

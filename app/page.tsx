@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TaskForm } from "@/components/task-form"
 import { TaskBoard } from "@/components/task-board"
 import { DeletedTasksDrawer } from "@/components/deleted-tasks-drawer"
+import { TaskFormModal } from "@/components/task-form-modal"
 import type { Task } from "@/types/task"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, X, Trash2 } from "lucide-react"
+import { PlusCircle, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function TaskManagement() {
@@ -238,6 +238,12 @@ export default function TaskManagement() {
     })
   }
 
+  // Close form and reset edit state
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setTaskToEdit(null)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
@@ -252,26 +258,12 @@ export default function TaskManagement() {
             <Trash2 className="h-4 w-4" />
             Trash ({deletedTasks.length})
           </Button>
-          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-            {showForm ? <X className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}
-            {showForm ? "Cancel" : "New Task"}
+          <Button onClick={() => setShowForm(true)} className="gap-2">
+            <PlusCircle className="h-4 w-4" />
+            New Task
           </Button>
         </div>
       </div>
-
-      {showForm && (
-        <div className="mb-8 max-w-md mx-auto">
-          <TaskForm
-            onSubmit={taskToEdit ? updateTask : addTask}
-            initialTask={taskToEdit}
-            isEditing={!!taskToEdit}
-            onCancel={() => {
-              setTaskToEdit(null)
-              setShowForm(false)
-            }}
-          />
-        </div>
-      )}
 
       <TaskBoard
         tasks={tasks}
@@ -279,6 +271,14 @@ export default function TaskManagement() {
         onDelete={deleteTask}
         onStatusChange={changeTaskStatus}
         onAddComment={addComment}
+      />
+
+      <TaskFormModal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        onSubmit={taskToEdit ? updateTask : addTask}
+        initialTask={taskToEdit}
+        isEditing={!!taskToEdit}
       />
 
       <DeletedTasksDrawer

@@ -1,10 +1,26 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, ArrowRight, CheckCircle2, Clock, RotateCcw, MoveHorizontal } from "lucide-react"
+import {
+  Edit,
+  Trash2,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  RotateCcw,
+  MoveHorizontal,
+  Calendar,
+  MessageCircle,
+  Send,
+} from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { format, isPast, isToday, addDays, isBefore } from "date-fns"
 import type { Task } from "@/types/task"
 
 interface TaskItemProps {
@@ -12,11 +28,14 @@ interface TaskItemProps {
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
   onStatusChange: (taskId: string, newStatus: "todo" | "in-progress" | "completed") => void
+  onAddComment: (taskId: string, comment: string) => void
 }
 
-export function TaskItem({ task, onEdit, onDelete, onStatusChange }: TaskItemProps) {
+export function TaskItem({ task, onEdit, onDelete, onStatusChange, onAddComment }: TaskItemProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+  const [newComment, setNewComment] = useState("")
 
   // Define styles based on priority
   const getPriorityBadge = () => {
@@ -97,6 +116,48 @@ export function TaskItem({ task, onEdit, onDelete, onStatusChange }: TaskItemPro
     }
   }
 
+  // Format and style deadline
+  const renderDeadline = () => {
+    if (!task.deadline) return null
+
+    const deadlineDate = new Date(task.deadline)
+    let className = "text-xs flex items-center gap-1 "
+
+    // Style based on deadline proximity
+    if (isPast(deadlineDate) && !isToday(deadlineDate)) {
+      className += "text-red-600 font-medium"
+    } else if (isToday(deadlineDate)) {
+      className += "text-orange-600 font-medium"
+    } else if (isBefore(new Date(), addDays(deadlineDate, 3))) {
+      className += "text-yellow-600"
+    } else {
+      className += "text-muted-foreground"
+    }
+
+    return (
+      <div className={className}>
+        <Calendar className="h-3 w-3" />
+        {isToday(deadlineDate)
+          ? "Due today"
+          : isPast(deadlineDate)
+            ? `Overdue: ${format(deadlineDate, "MMM d")}`
+            : `Due ${format(deadlineDate, "MMM d")}`}
+      </div>
+    )
+  }
+
+  // Handle comment submission
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newComment.trim()) {
+      onAddComment(task.id, newComment.trim())
+      setNewComment("")
+    }
+  }
+
+  // Count comments
+  const commentCount = task.comments?.length || 0
+
   return (
     <Card
       className={`overflow-hidden transition-all duration-200 ${
@@ -121,8 +182,11 @@ export function TaskItem({ task, onEdit, onDelete, onStatusChange }: TaskItemPro
               <p className="text-muted-foreground text-sm mt-1 mb-3 line-clamp-2">{task.description}</p>
             )}
 
+            {/* Deadline display */}
+            {task.deadline && <div className="mb-3">{renderDeadline()}</div>}
+
             <div className="flex flex-wrap justify-between items-center gap-2 mt-3">
-              {renderStatusButtons()}
+              <div className="flex gap-1 items-center">{renderStatusButtons()}</div>
 
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm" onClick={() => onEdit(task)} className="h-7 px-2">
@@ -139,6 +203,57 @@ export function TaskItem({ task, onEdit, onDelete, onStatusChange }: TaskItemPro
                   Delete
                 </Button>
               </div>
+            </div>
+
+            {/* Comments section */}
+            <div className="mt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 -ml-2"
+                onClick={() => setIsCommentsOpen(!isCommentsOpen)}
+              >
+                <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                Comments {commentCount > 0 && `(${commentCount})`}
+              </Button>
+
+              {isCommentsOpen && (
+                <div className="mt-2">
+                  <Separator className="my-2" />
+
+                  {/* Comment list */}
+                  <div className="space-y-2 max-h-40 overflow-y-auto mb-2">
+                    {!task.comments || task.comments.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">No comments yet</p>
+                    ) : (
+                      task.comments.map((comment) => (
+                        <div key={comment.id} className="bg-muted/50 rounded-md p-2">
+                          <div className="flex justify-between items-start">
+                            <span className="text-xs font-medium">{comment.author}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(comment.createdAt), "MMM d, h:mm a")}
+                            </span>
+                          </div>
+                          <p className="text-sm mt-1">{comment.text}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Add comment form */}
+                  <form onSubmit={handleCommentSubmit} className="flex gap-2 mt-2">
+                    <Input
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="h-8 text-sm"
+                    />
+                    <Button type="submit" size="sm" className="h-8 px-2" disabled={!newComment.trim()}>
+                      <Send className="h-3.5 w-3.5" />
+                    </Button>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>

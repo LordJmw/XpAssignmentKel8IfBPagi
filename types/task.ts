@@ -1,10 +1,20 @@
 import type React from "react"
+
+export interface Comment {
+  id: string
+  text: string
+  author: string
+  createdAt: string
+}
+
 export interface Task {
   id: string
   title: string
   description: string
   priority: "high" | "medium" | "low"
   status: "todo" | "in-progress" | "completed"
+  deadline?: string
+  comments: Comment[]
 }
 
 // Add this to ensure TypeScript recognizes the react-beautiful-dnd types

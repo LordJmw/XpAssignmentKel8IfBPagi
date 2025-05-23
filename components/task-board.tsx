@@ -6,9 +6,10 @@ interface TaskBoardProps {
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
   onStatusChange: (taskId: string, newStatus: "todo" | "in-progress" | "completed") => void
+  onAddComment: (taskId: string, comment: string) => void
 }
 
-export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange }: TaskBoardProps) {
+export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange, onAddComment }: TaskBoardProps) {
   // Group tasks by status
   const todoTasks = tasks.filter((task) => task.status === "todo")
   const inProgressTasks = tasks.filter((task) => task.status === "in-progress")
@@ -22,6 +23,7 @@ export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange }: TaskBoard
         onEdit={onEdit}
         onDelete={onDelete}
         onStatusChange={onStatusChange}
+        onAddComment={onAddComment}
         className="bg-slate-50 border-t-4 border-slate-400"
       />
 
@@ -31,6 +33,7 @@ export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange }: TaskBoard
         onEdit={onEdit}
         onDelete={onDelete}
         onStatusChange={onStatusChange}
+        onAddComment={onAddComment}
         className="bg-blue-50 border-t-4 border-blue-400"
       />
 
@@ -40,6 +43,7 @@ export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange }: TaskBoard
         onEdit={onEdit}
         onDelete={onDelete}
         onStatusChange={onStatusChange}
+        onAddComment={onAddComment}
         className="bg-green-50 border-t-4 border-green-400"
       />
     </div>

@@ -7,3 +7,11 @@ global.localStorage = {
   removeItem: jest.fn(),
   clear: jest.fn(),
 }
+
+if (typeof window !== 'undefined') {
+  window.ResizeObserver = window.ResizeObserver || class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}

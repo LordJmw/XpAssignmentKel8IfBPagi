@@ -9,8 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import { CalendarIcon, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
 import type { Task } from "@/types/task"
-import { AlertCircle } from "lucide-react"
 
 interface TaskFormProps {
   onSubmit: (task: Task) => void
@@ -26,13 +30,17 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
     description: "",
     priority: "medium",
     status: "todo",
+    deadline: undefined,
+    comments: [],
   })
   const [error, setError] = useState("")
+  const [date, setDate] = useState<Date | undefined>(undefined)
 
   // Update form when initialTask changes (for editing)
   useEffect(() => {
     if (initialTask) {
       setTask(initialTask)
+      setDate(initialTask.deadline ? new Date(initialTask.deadline) : undefined)
     } else {
       // Reset form when not editing
       setTask({
@@ -41,7 +49,10 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
         description: "",
         priority: "medium",
         status: "todo",
+        deadline: undefined,
+        comments: [],
       })
+      setDate(undefined)
     }
     setError("")
   }, [initialTask])
@@ -54,6 +65,14 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
 
   const handleSelectChange = (name: string, value: string) => {
     setTask((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleDateChange = (newDate: Date | undefined) => {
+    setDate(newDate)
+    setTask((prev) => ({
+      ...prev,
+      deadline: newDate ? newDate.toISOString() : undefined,
+    }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,7 +93,10 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
         description: "",
         priority: "medium",
         status: "todo",
+        deadline: undefined,
+        comments: [],
       })
+      setDate(undefined)
     }
   }
 
@@ -157,6 +179,24 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Deadline</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP") : "Set a deadline"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={date} onSelect={handleDateChange} initialFocus />
+              </PopoverContent>
+            </Popover>
           </div>
         </CardContent>
 

@@ -8,10 +8,19 @@ interface TaskColumnProps {
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
   onStatusChange: (taskId: string, newStatus: "todo" | "in-progress" | "completed") => void
+  onAddComment: (taskId: string, comment: string) => void
   className?: string
 }
 
-export function TaskColumn({ title, tasks, onEdit, onDelete, onStatusChange, className }: TaskColumnProps) {
+export function TaskColumn({
+  title,
+  tasks,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  onAddComment,
+  className,
+}: TaskColumnProps) {
   return (
     <Card className={`h-full ${className}`}>
       <CardHeader className="pb-2">
@@ -26,7 +35,14 @@ export function TaskColumn({ title, tasks, onEdit, onDelete, onStatusChange, cla
             <div className="text-center py-8 text-muted-foreground italic text-sm">No tasks</div>
           ) : (
             tasks.map((task) => (
-              <TaskItem key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange} />
+              <TaskItem
+                key={task.id}
+                task={task}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onStatusChange={onStatusChange}
+                onAddComment={onAddComment}
+              />
             ))
           )}
         </div>

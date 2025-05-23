@@ -1,5 +1,8 @@
+"use client"
+
 import { TaskColumn } from "@/components/task-column"
 import type { Task } from "@/types/task"
+import { useEffect } from "react"
 
 interface TaskBoardProps {
   tasks: Task[]
@@ -10,6 +13,20 @@ interface TaskBoardProps {
 }
 
 export function TaskBoard({ tasks, onEdit, onDelete, onStatusChange, onAddComment }: TaskBoardProps) {
+  // Debug logging to track tasks by status
+  useEffect(() => {
+    const todoCount = tasks.filter((t) => t.status === "todo").length
+    const inProgressCount = tasks.filter((t) => t.status === "in-progress").length
+    const completedCount = tasks.filter((t) => t.status === "completed").length
+
+    console.log("TaskBoard tasks by status:", {
+      todo: todoCount,
+      inProgress: inProgressCount,
+      completed: completedCount,
+      total: tasks.length,
+    })
+  }, [tasks])
+
   // Group tasks by status
   const todoTasks = tasks.filter((task) => task.status === "todo")
   const inProgressTasks = tasks.filter((task) => task.status === "in-progress")

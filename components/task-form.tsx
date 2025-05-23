@@ -39,7 +39,23 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
   // Update form when initialTask changes (for editing)
   useEffect(() => {
     if (initialTask) {
-      setTask(initialTask)
+      console.log("Initial task in form:", initialTask)
+
+      // Make sure we have all fields with proper defaults
+      const updatedTask = {
+        id: initialTask.id || "",
+        title: initialTask.title || "",
+        description: initialTask.description || "",
+        priority: initialTask.priority || "medium",
+        status: initialTask.status || "todo", // Ensure status is preserved
+        deadline: initialTask.deadline,
+        comments: initialTask.comments || [],
+      }
+
+      console.log("Setting form task state to:", updatedTask)
+      setTask(updatedTask)
+
+      // Set date if deadline exists
       setDate(initialTask.deadline ? new Date(initialTask.deadline) : undefined)
     } else {
       // Reset form when not editing
@@ -64,7 +80,12 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
   }
 
   const handleSelectChange = (name: string, value: string) => {
-    setTask((prev) => ({ ...prev, [name]: value }))
+    console.log(`Changing ${name} to ${value}`)
+    setTask((prev) => {
+      const updated = { ...prev, [name]: value }
+      console.log("Updated task state:", updated)
+      return updated
+    })
   }
 
   const handleDateChange = (newDate: Date | undefined) => {
@@ -83,7 +104,17 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
       return
     }
 
-    onSubmit(task)
+    // Log the task being submitted for debugging
+    console.log("Submitting task:", task)
+
+    // Make sure we're sending all required fields, especially status
+    const taskToSubmit = {
+      ...task,
+      status: task.status || (initialTask ? initialTask.status : "todo"),
+    }
+
+    console.log("Final task to submit:", taskToSubmit)
+    onSubmit(taskToSubmit)
 
     // Only reset if not editing
     if (!isEditing) {
@@ -169,7 +200,11 @@ export function TaskForm({ onSubmit, initialTask, isEditing, onCancel }: TaskFor
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={task.status} onValueChange={(value) => handleSelectChange("status", value)}>
+            <Select
+              value={task.status}
+              onValueChange={(value) => handleSelectChange("status", value)}
+              defaultValue={task.status}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>

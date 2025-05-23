@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { PlusCircle, X, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-
 export default function TaskManagement() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [deletedTasks, setDeletedTasks] = useState<Task[]>([])
@@ -18,22 +17,44 @@ export default function TaskManagement() {
   const [showDeletedDrawer, setShowDeletedDrawer] = useState(false)
   const { toast } = useToast()
 
+  // Debug function to log the current state
+  const logState = (message: string, data?: any) => {
+    console.log(
+      `[${message}]`,
+      data || {
+        tasks: tasks.map((t) => ({ id: t.id, title: t.title, status: t.status })),
+        taskToEdit: taskToEdit ? { id: taskToEdit.id, title: taskToEdit.title, status: taskToEdit.status } : null,
+      },
+    )
+  }
+
   // Load tasks and deleted tasks from localStorage on initial render
   useEffect(() => {
     const storedTasks = localStorage.getItem("tasks")
     if (storedTasks) {
-      setTasks(JSON.parse(storedTasks))
+      try {
+        const parsedTasks = JSON.parse(storedTasks)
+        setTasks(parsedTasks)
+        logState("Loaded tasks from localStorage", parsedTasks)
+      } catch (error) {
+        console.error("Error parsing tasks from localStorage:", error)
+      }
     }
 
     const storedDeletedTasks = localStorage.getItem("deletedTasks")
     if (storedDeletedTasks) {
-      setDeletedTasks(JSON.parse(storedDeletedTasks))
+      try {
+        setDeletedTasks(JSON.parse(storedDeletedTasks))
+      } catch (error) {
+        console.error("Error parsing deleted tasks from localStorage:", error)
+      }
     }
   }, [])
 
   // Save tasks to localStorage whenever tasks change
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks))
+    logState("Saved tasks to localStorage")
   }, [tasks])
 
   // Save deleted tasks to localStorage whenever they change
@@ -50,10 +71,14 @@ export default function TaskManagement() {
       comments: task.comments || [],
     }
 
+    logState("Before adding task", { newTask })
+
     setTasks((prevTasks) => {
       const newTasks = [...prevTasks, newTask]
-      return sortTasksByPriority(newTasks)
+      const sortedTasks = sortTasksByPriority(newTasks)
+      return sortedTasks
     })
+
     setShowForm(false)
 
     toast({
@@ -64,10 +89,33 @@ export default function TaskManagement() {
 
   // Update an existing task
   const updateTask = (updatedTask: Task) => {
-    setTasks((prevTasks) => {
-      const newTasks = prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-      return sortTasksByPriority(newTasks)
+    logState("Before updating task", { updatedTask })
+
+    // Create a new tasks array with the updated task
+    const newTasks = tasks.map((task) => {
+      if (task.id === updatedTask.id) {
+        // Ensure we preserve all properties, especially status
+        return {
+          ...task, // Start with all existing properties
+          ...updatedTask, // Override with updated properties
+          status: updatedTask.status || task.status, // Explicitly ensure status is preserved
+          comments: updatedTask.comments || task.comments || [], // Ensure comments are preserved
+        }
+      }
+      return task
     })
+
+    // Log the before and after state for debugging
+    console.log("Task update:", {
+      before: tasks.find((t) => t.id === updatedTask.id),
+      update: updatedTask,
+      after: newTasks.find((t) => t.id === updatedTask.id),
+    })
+
+    // Update the state with the new tasks array
+    setTasks(sortTasksByPriority(newTasks))
+
+    // Reset the edit state
     setTaskToEdit(null)
     setShowForm(false)
 
@@ -75,12 +123,19 @@ export default function TaskManagement() {
       title: "Task updated",
       description: "Your task has been updated successfully.",
     })
+
+    // Log the final state after update
+    setTimeout(() => {
+      logState("After updating task")
+    }, 0)
   }
 
   // Delete a task (move to deleted tasks)
   const deleteTask = (id: string) => {
     const taskToDelete = tasks.find((task) => task.id === id)
     if (taskToDelete) {
+      logState("Before deleting task", { taskToDelete })
+
       // Remove from active tasks
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id))
 
@@ -126,13 +181,25 @@ export default function TaskManagement() {
 
   // Set a task to edit
   const editTask = (task: Task) => {
-    setTaskToEdit(task)
+    // Create a deep copy to ensure we don't lose any data
+    const taskCopy = JSON.parse(JSON.stringify(task))
+    logState("Setting task to edit", { taskCopy })
+    setTaskToEdit(taskCopy)
     setShowForm(true)
   }
 
   // Change task status
   const changeTaskStatus = (taskId: string, newStatus: "todo" | "in-progress" | "completed") => {
-    setTasks((prevTasks) => prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)))
+    logState("Before changing task status", { taskId, newStatus })
+
+    setTasks((prevTasks) => {
+      const updatedTasks = prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task))
+      return updatedTasks
+    })
+
+    setTimeout(() => {
+      logState("After changing task status")
+    }, 0)
   }
 
   // Add a comment to a task

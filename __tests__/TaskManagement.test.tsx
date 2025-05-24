@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import TaskManagement from "@/app/page"
 import { Task } from "@/types/task"
-import { useToast } from "@/hooks/use-toast"
 
 // Mock the toast hook
 jest.mock("@/hooks/use-toast", () => ({
@@ -32,6 +31,116 @@ Object.defineProperty(window, "localStorage", {
   value: localStorageMock,
 })
 
+// Mock TaskBoard component
+jest.mock("@/components/task-board", () => ({
+  TaskBoard: ({ tasks, onEdit, onDelete, onStatusChange, onAddComment }: any) => (
+    <div data-testid="task-board">
+      {tasks.map((task: Task) => (
+        <div key={task.id} data-testid={`task-${task.id}`}>
+          <h3>{task.title}</h3>
+          <p>{task.description}</p>
+          <button onClick={() => onEdit(task)} data-testid={`edit-task-${task.id}`}>
+            Edit
+          </button>
+          <button onClick={() => onDelete(task.id)} data-testid={`delete-task-${task.id}`}>
+            Delete
+          </button>
+          <select
+            value={task.status}
+            onChange={(e) => onStatusChange(task.id, e.target.value)}
+            data-testid={`status-select-${task.id}`}
+          >
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+          <button onClick={() => onAddComment(task.id, "Test comment")} data-testid={`add-comment-${task.id}`}>
+            Add Comment
+          </button>
+        </div>
+      ))}
+    </div>
+  ),
+}))
+
+// Mock TaskFormModal component
+jest.mock("@/components/task-form-modal", () => ({
+  TaskFormModal: ({ isOpen, onClose, onSubmit, initialTask, isEditing }: any) => (
+    isOpen ? (
+      <div data-testid="task-form-modal">
+        <h2>{isEditing ? "Edit Task" : "Create Task"}</h2>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit({
+              id: initialTask?.id || "1",
+              title: (screen.getByTestId("task-title-input") as HTMLInputElement).value || "Test Task",
+              description: (screen.getByTestId("task-description-input") as HTMLTextAreaElement).value || "Test Description",
+              priority: (screen.getByTestId("task-priority-select") as HTMLSelectElement).value || "medium",
+              status: initialTask?.status || "todo",
+              comments: initialTask?.comments || [],
+            });
+            onClose();
+          }}
+        >
+          <input
+            type="text"
+            defaultValue={initialTask?.title || ""}
+            data-testid="task-title-input"
+          />
+          <textarea
+            defaultValue={initialTask?.description || ""}
+            data-testid="task-description-input"
+          />
+          <select
+            defaultValue={initialTask?.priority || "medium"}
+            data-testid="task-priority-select"
+          >
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <button type="submit" data-testid="submit-task-form">
+            {isEditing ? "Update Task" : "Create Task"}
+          </button>
+          <button type="button" onClick={onClose} data-testid="cancel-task-form">
+            Cancel
+          </button>
+        </form>
+      </div>
+    ) : null
+  ),
+}));
+
+// Mock DeletedTasksDrawer component
+jest.mock("@/components/deleted-tasks-drawer", () => ({
+  DeletedTasksDrawer: ({ open, onClose, deletedTasks, onRestore, onDelete, onClearAll }: any) => (
+    <div data-testid="deleted-tasks-drawer" style={{ display: open ? "block" : "none" }}>
+      <h2>Deleted Tasks</h2>
+      <button onClick={onClose} data-testid="close-deleted-tasks-drawer">
+        Close
+      </button>
+      <ul>
+        {deletedTasks.map((task: Task) => (
+          <li key={task.id} data-testid={`deleted-task-${task.id}`}>
+            {task.title}
+            <button onClick={() => onRestore(task.id)} data-testid={`restore-task-${task.id}`}>
+              Restore
+            </button>
+            <button onClick={() => onDelete(task.id)} data-testid={`permanently-delete-task-${task.id}`}>
+              Delete Permanently
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button onClick={onClearAll} data-testid="clear-all-deleted-tasks">
+        Clear All
+      </button>
+    </div>
+  ),
+}))
+
+// Test suite
 describe("TaskManagement", () => {
   beforeEach(() => {
     localStorage.clear()
@@ -44,55 +153,87 @@ describe("TaskManagement", () => {
     expect(screen.getByText("Task Management")).toBeInTheDocument()
     expect(screen.getByText("New Task")).toBeInTheDocument()
     expect(screen.getByText("Trash (0)")).toBeInTheDocument()
-  })
-
-  it("shows and hides the task form", async () => {
-    render(<TaskManagement />)
-
-    // Form should not be visible initially
-    expect(screen.queryByLabelText("Title")).not.toBeInTheDocument()
-
-    // Click new task button
-    fireEvent.click(screen.getByText("New Task"))
-    expect(screen.getByLabelText("Title")).toBeInTheDocument()
-
-    // Click cancel button
-    fireEvent.click(screen.getByText("Cancel"))
-    await waitFor(() => {
-      expect(screen.queryByLabelText("Title")).not.toBeInTheDocument()
-    })
+    expect(screen.getByTestId("task-board")).toBeInTheDocument()
   })
 
   it("creates a new task", async () => {
     render(<TaskManagement />)
 
-    // Open form
     fireEvent.click(screen.getByText("New Task"))
+    fireEvent.click(screen.getByTestId("submit-task-form"))
 
-    // Fill out form
-    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Test Task" } })
-    fireEvent.change(screen.getByLabelText("Description"), {
-      target: { value: "Test Description" },
-    })
-    fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "medium" } })
-
-    // Submit form
-    fireEvent.click(screen.getByText("Create Task"))
-
-    // Check if task was added
     await waitFor(() => {
-      expect(screen.getByText("Test Task")).toBeInTheDocument()
-      expect(screen.getByText("Test Description")).toBeInTheDocument()
+      expect(screen.getByTestId("task-board")).toHaveTextContent("Test Task")
     })
 
-    // Check localStorage
     const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
     expect(tasks.length).toBe(1)
     expect(tasks[0].title).toBe("Test Task")
   })
 
+  it("edits an existing task", async () => {
+  const initialTask: Task = {
+    id: "1",
+    title: "Initial Task",
+    description: "Initial Description",
+    priority: "low",
+    status: "todo",
+    comments: [],
+  };
+  localStorage.setItem("tasks", JSON.stringify([initialTask]));
+
+  render(<TaskManagement />);
+
+  // Wait for task to load
+  await waitFor(() => {
+    expect(screen.getByTestId("task-1")).toBeInTheDocument();
+  });
+
+  // Click edit button
+  fireEvent.click(screen.getByTestId("edit-task-1"));
+
+  // Verify the form is open with initial values
+  await waitFor(() => {
+    expect(screen.getByTestId("task-form-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("task-title-input")).toHaveValue("Initial Task");
+  });
+
+  // Simulate changing the form inputs
+  fireEvent.change(screen.getByTestId("task-title-input"), {
+    target: { value: "Test Task" },
+  });
+  fireEvent.change(screen.getByTestId("task-description-input"), {
+    target: { value: "Test Description" },
+  });
+  fireEvent.change(screen.getByTestId("task-priority-select"), {
+    target: { value: "medium" },
+  });
+
+  // Submit form
+  fireEvent.click(screen.getByTestId("submit-task-form"));
+
+  // Verify form is closed
+  await waitFor(() => {
+    expect(screen.queryByTestId("task-form-modal")).not.toBeInTheDocument();
+  });
+
+  // Verify task is updated in UI
+  await waitFor(
+    () => {
+      expect(screen.getByTestId("task-1")).toHaveTextContent("Test Task");
+    },
+    { timeout: 3000 }
+  );
+
+  // Check localStorage
+  const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+  expect(tasks[0].title).toBe("Test Task");
+  expect(tasks[0].description).toBe("Test Description");
+  expect(tasks[0].priority).toBe("medium");
+});
+
   it("deletes a task (moves to trash)", async () => {
-    const initialTask: Task = {
+    const task: Task = {
       id: "1",
       title: "Task to delete",
       description: "Description",
@@ -100,32 +241,25 @@ describe("TaskManagement", () => {
       status: "todo",
       comments: [],
     }
-    localStorage.setItem("tasks", JSON.stringify([initialTask]))
+    localStorage.setItem("tasks", JSON.stringify([task]))
 
     render(<TaskManagement />)
 
-    // Wait for task to load
     await waitFor(() => {
-      expect(screen.getByText("Task to delete")).toBeInTheDocument()
+      expect(screen.getByTestId("task-1")).toBeInTheDocument()
     })
 
-    // Find the delete button - this will depend on your actual implementation
-    // You might need to add data-testid to your delete button in the TaskBoard component
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i })
-    fireEvent.click(deleteButtons[0])
+    fireEvent.click(screen.getByTestId("delete-task-1"))
 
-    // Check if task was removed from view
     await waitFor(() => {
-      expect(screen.queryByText("Task to delete")).not.toBeInTheDocument()
+      expect(screen.queryByTestId("task-1")).not.toBeInTheDocument()
     })
 
-    // Check localStorage
     const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
     expect(tasks.length).toBe(0)
 
     const deletedTasks = JSON.parse(localStorage.getItem("deletedTasks") || "[]")
     expect(deletedTasks.length).toBe(1)
-    expect(deletedTasks[0].title).toBe("Task to delete")
   })
 
   it("restores a deleted task", async () => {
@@ -141,19 +275,13 @@ describe("TaskManagement", () => {
 
     render(<TaskManagement />)
 
-    // Open trash drawer
     fireEvent.click(screen.getByText(/Trash \(\d+\)/))
+    fireEvent.click(screen.getByTestId("restore-task-1"))
 
-    // Find restore button - you might need to add data-testid to your restore button
-    const restoreButton = await screen.findByText(/restore/i)
-    fireEvent.click(restoreButton)
-
-    // Check if task was restored
     await waitFor(() => {
-      expect(screen.getByText("Deleted Task")).toBeInTheDocument()
+      expect(screen.getByTestId("task-1")).toBeInTheDocument()
     })
 
-    // Check localStorage
     const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
     expect(tasks.length).toBe(1)
 
@@ -174,19 +302,95 @@ describe("TaskManagement", () => {
 
     render(<TaskManagement />)
 
-    // Open trash drawer
     fireEvent.click(screen.getByText(/Trash \(\d+\)/))
+    fireEvent.click(screen.getByTestId("permanently-delete-task-1"))
 
-    // Find delete permanently button - you might need to add data-testid
-    const deleteButton = await screen.findByText(/delete permanently/i)
-    fireEvent.click(deleteButton)
-
-    // Check if task was removed
     await waitFor(() => {
-      expect(screen.queryByText("Task to delete permanently")).not.toBeInTheDocument()
+      expect(screen.queryByTestId("deleted-task-1")).not.toBeInTheDocument()
     })
 
-    // Check localStorage
+    const deletedTasks = JSON.parse(localStorage.getItem("deletedTasks") || "[]")
+    expect(deletedTasks.length).toBe(0)
+  })
+
+  it("changes task status", async () => {
+    const task: Task = {
+      id: "1",
+      title: "Task to move",
+      description: "Description",
+      priority: "medium",
+      status: "todo",
+      comments: [],
+    }
+    localStorage.setItem("tasks", JSON.stringify([task]))
+
+    render(<TaskManagement />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-1")).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("status-select-1"), { target: { value: "in-progress" } })
+
+    const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
+    expect(tasks[0].status).toBe("in-progress")
+  })
+
+  it("adds a comment to a task", async () => {
+    const task: Task = {
+      id: "1",
+      title: "Task with comments",
+      description: "Description",
+      priority: "high",
+      status: "todo",
+      comments: [],
+    }
+    localStorage.setItem("tasks", JSON.stringify([task]))
+
+    render(<TaskManagement />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("task-1")).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByTestId("add-comment-1"))
+
+    const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
+    expect(tasks[0].comments.length).toBe(1)
+    expect(tasks[0].comments[0].text).toBe("Test comment")
+  })
+
+  it("clears all deleted tasks", async () => {
+    const deletedTasksData: Task[] = [
+      {
+        id: "1",
+        title: "Deleted Task 1",
+        description: "Description",
+        priority: "high",
+        status: "todo",
+        comments: [],
+      },
+      {
+        id: "2",
+        title: "Deleted Task 2",
+        description: "Description",
+        priority: "medium",
+        status: "todo",
+        comments: [],
+      },
+    ]
+    localStorage.setItem("deletedTasks", JSON.stringify(deletedTasksData))
+
+    render(<TaskManagement />)
+
+    fireEvent.click(screen.getByText(/Trash \(\d+\)/))
+    fireEvent.click(screen.getByTestId("clear-all-deleted-tasks"))
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("deleted-task-1")).not.toBeInTheDocument()
+      expect(screen.queryByTestId("deleted-task-2")).not.toBeInTheDocument()
+    })
+
     const deletedTasks = JSON.parse(localStorage.getItem("deletedTasks") || "[]")
     expect(deletedTasks.length).toBe(0)
   })

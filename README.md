@@ -32,7 +32,7 @@ A task management web application built with **Next.js**, **TypeScript**, **Tail
 ## 📦 Installation & Setup
 
 ```bash
-# Clone the repo
+# Clone the repository
 git clone https://github.com/LordJmw/XpAssignmentKel8IfBPagi.git
 cd XpAssignmentKel8IfBPagi
 
